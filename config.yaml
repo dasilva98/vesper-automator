@@ -1,0 +1,16 @@
+# Configuration for Vesper Automator
+
+# Paths to Data Folders
+# Use relative paths (starting with ./) or absolute paths
+raw_data_folder: "./data/raw"
+intermediate_folder: "./data/intermediate"
+processed_folder: "./data/processed"
+
+# External Tools Paths
+# IMPORTANT: Update these to match your actual installation paths on Windows!
+vesper_app_path: "C:/Program Files/Vesper/VesperApp.exe"
+gps_cli_path: "C:/Program Files/Vesper/CG/GeoTag/GeoTag.exe"
+gps_engine_path: "C:/Program Files/Vesper/CG/GeoTagEngine/GeoTagEngine.exe"
+
+# Settings
+log_level: "INFO"  # Options: DEBUG, INFO, WARNING, ERROR
