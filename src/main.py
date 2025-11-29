@@ -1,8 +1,8 @@
 import yaml
-import logging
 import os
 from src.core.logger import setup_logger
 from src.core.crawler import find_raw_files
+from src.parsers.imu_parser import parse_imu_file
 
 def load_config(config_path="config.yaml"):
     """Loads configuration from the YAML file"""
@@ -26,7 +26,7 @@ def main():
         logger.error(f"Failed to load config: {e}")
         return
     
-    #TODO testing file crawler
+    # Crawl files
     raw_folder = config.get("raw_data_folder")
     files_map = find_raw_files(raw_folder)
 
@@ -37,7 +37,22 @@ def main():
     print(f"IMU Files: {len(files_map['imu'])}")
     print("--------------------\n")
 
-    logging.warning('Watch Out!')
+    #TODO test IMU parser
+    if files_map['imu']:
+        logger.info("--- Testing IMU Parser ---")
+        # Grab the first file found to test
+        test_file = files_map['imu'][0]
+
+        # Run the parser
+        result = parse_imu_file(test_file)
+
+        if result is not None:
+            print(f"\nSUCCESS: Parsed {os.path.basename(test_file)}")
+            print(f"Shape: {result.shape}") # type: ignore 
+            print(f"First 15 Readings (X, Y, Z): \n{result[:15]}")
+            print("------------------------------------------\n")
+    else:
+        logger.warning("No IMU files foud to test.")
 
 if __name__ == "__main__":
     main()

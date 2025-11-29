@@ -11,7 +11,7 @@ def find_raw_files(root_folder):
 
     logger.info(f"Scanning for files in: {root_folder}")
 
-    found_files = {
+    files_map = {
         "gps": [],
         "aud": [],
         "imu": []
@@ -19,8 +19,10 @@ def find_raw_files(root_folder):
 
     if not os.path.exists(root_folder):
         logger.error(f"Raw data folder not found: {root_folder}")
-        return found_files
+        return files_map
     
+
+    count = 0
     # Recursively walk through every folder and subfolder
     for dirpath, _, filenames in os.walk(root_folder):
         for filename in filenames:
@@ -31,16 +33,19 @@ def find_raw_files(root_folder):
                 #TODO we need to understand if we want to check all collar folder or just one specific(depends on what the user wants)
                 lower_path = full_path.lower()
                 if "gps" in lower_path:
-                    found_files["gps"].append(full_path)
+                    files_map["gps"].append(full_path)
                 elif "aud" in lower_path:
-                    found_files["aud"].append(full_path)
+                    files_map["aud"].append(full_path)
                 elif "imu" in lower_path:
-                    found_files["imu"].append(full_path)
+                    files_map["imu"].append(full_path)
                 else:
                     logger.warning(f"Unkown sensor type for files: {filename}")
 
-    logger.info(f"Found {len(found_files['gps'])} GPS files")
-    logger.info(f"Found {len(found_files['aud'])} Audio files")
-    logger.info(f"Found {len(found_files['imu'])} IMU files")
+                count += 1
+
+    logger.info(f"Scan complete. Found {count} total binary files.")
+    logger.info(f"  - GPS: {len(files_map['gps'])}")
+    logger.info(f"  - IMU: {len(files_map['imu'])}")
+    logger.info(f"  - Audio: {len(files_map['aud'])}")
     
-    return found_files
+    return files_map
