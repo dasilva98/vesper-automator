@@ -44,8 +44,8 @@ def find_raw_files(root_folder):
                 count += 1
 
     logger.info(f"Scan complete. Found {count} total binary files.")
-    logger.info(f"  - GPS: {len(files_map['gps'])}")
-    logger.info(f"  - IMU: {len(files_map['imu'])}")
-    logger.info(f"  - Audio: {len(files_map['aud'])}")
-    
+    logger.info(f"  GPS: {len(files_map['gps'])}")
+    logger.info(f"  Audio: {len(files_map['aud'])}")
+    logger.info(f"  IMU: {len(files_map['imu'])}")
+
     return files_map

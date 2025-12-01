@@ -4,7 +4,7 @@
         "ms-python.python",
         "ms-python.vscode-pylance",
         "ms-python.vscode-python-envs",
-        "charliermarsh.ruff", // Linter/Formatter
+        //"charliermarsh.ruff", // Linter/Formatter
         
         // Data Science & Visualization (Highly Recommended for this project)
         "ms-toolsai.jupyter",
@@ -20,7 +20,6 @@
         // General Utilities
         "pkief.material-icon-theme", // Makes file icons readable
         "mechatroner.rainbow-csv",   // Essential for viewing CSV files clearly
-        "tamasfe.even-better-toml",  // Good for config files
         "redhat.vscode-yaml",        // Good for config.yaml
         "tomoki1207.pdf"             // Good for viewing the PDF documentation inside VS Code
     ]

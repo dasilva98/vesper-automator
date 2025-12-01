@@ -1,5 +1,6 @@
 import yaml
 import os
+from tqdm import tqdm
 from src.core.logger import setup_logger
 from src.core.crawler import find_raw_files
 from src.parsers.imu_parser import parse_imu_file
@@ -30,29 +31,33 @@ def main():
     raw_folder = config.get("raw_data_folder")
     files_map = find_raw_files(raw_folder)
 
-    #TODO temporary testing prints
-    print("\n--- TEST RESULTS ---")
-    print(f"GPS Files: {len(files_map['gps'])}")
-    print(f"Audio Files: {len(files_map['aud'])}")
-    print(f"IMU Files: {len(files_map['imu'])}")
-    print("--------------------\n")
+    # Process IMU files with progress bar
+    imu_files = files_map['imu']
 
     #TODO test IMU parser
-    if files_map['imu']:
-        logger.info("--- Testing IMU Parser ---")
-        # Grab the first file found to test
-        test_file = files_map['imu'][0]
+    if imu_files:
+        logger.info(f"Starting IMU Parser on {len(imu_files)} files...")
+        
+        results = []
 
-        # Run the parser
-        result = parse_imu_file(test_file)
+        # Start tqdm loop
+        for filepath in tqdm(imu_files, desc="IMU Parsing", unit="file"):
+            try:
+                # Run the parser
+                data = parse_imu_file(filepath)
+                if data is not None:
+                    results.append(data)
+                    # TODO: Here we would normally save 'data' to a CSV (file_finisher section to be implemented) to avoid filling up RAM
+            except Exception as e:
+                logger.error(f"Error processing {filepath}: {e}")
 
-        if result is not None:
-            print(f"\nSUCCESS: Parsed {os.path.basename(test_file)}")
-            print(f"Shape: {result.shape}") # type: ignore 
-            print(f"First 15 Readings (X, Y, Z): \n{result[:15]}")
-            print("------------------------------------------\n")
+        if results is not None:
+            print(f"\nSuccessfully parsed {len(results)}/{len(imu_files)} IMU files.")
+            print(f"Shape: {results[0].shape}")
+            #print(f"First 15 Readings (X, Y, Z): \n{results[0][:15]}")
+            #print("------------------------------------------\n")
     else:
-        logger.warning("No IMU files foud to test.")
+        logger.warning("No IMU files foud.")
 
 if __name__ == "__main__":
     main()
