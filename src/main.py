@@ -5,7 +5,7 @@ from tqdm import tqdm
 from datetime import datetime
 from src.core.logger import setup_logger
 from src.core.crawler import find_raw_files
-from src.parsers.imu_parser import *
+from src.parsers.imu_parser import parse_imu_file
 from src.parsers.audio_parser import parse_audio_file
 from src.core.finisher import FileFinisher 
 
@@ -31,9 +31,19 @@ def generate_summary(stats, logger, processed_folder):
     lines.append(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     lines.append("="*40)
     lines.append(f"Total Files Found: {stats['total']}")
-    lines.append(f"Successfully Parsed: {stats['success']}")
-    lines.append(f"Failed / Skipped:  {stats['failed']}")
-
+    lines.append("-"*40)
+    lines.append(f"Total IMU Files Found: {stats['total_imu']}")
+    lines.append(f"IMU Files Successfully Parsed: {stats['success_imu']}")
+    lines.append(f"IMU Files Failed / Skipped:  {stats['failed_imu']}")
+    lines.append("-"*40)
+    lines.append(f"Total AUD Files Found: {stats['total_aud']}")
+    lines.append(f"AUD Files Successfully Parsed: {stats['success_aud']}")
+    lines.append(f"AUD Files Failed / Skipped:  {stats['failed_aud']}")
+    lines.append("-"*40)
+    lines.append(f"Total GPS Files Found: {stats['total_gps']}")
+    lines.append(f"GPS Files Successfully Parsed: {stats['success_gps']}")
+    lines.append(f"GPS Files Failed / Skipped:  {stats['failed_gps']}")
+ 
     if stats['errors']:
         logger.info("-"*40)
         logger.info("FAILED FILES:")
@@ -92,14 +102,21 @@ def main():
     # Summary stats container
     stats = {
         "total": 0,
-        "success": 0,
-        "failed": 0,
+        "total_imu": 0,
+        "total_aud": 0,
+        "total_gps": 0,
+        "success_imu": 0,
+        "success_aud": 0,
+        "success_gps": 0,
+        "failed_imu": 0,
+        "failed_aud": 0,
+        "failed_gps": 0,
         "errors": [] # List of dicts: {'file': name, 'reason': msg}
     }
 
     # Process IMU files 
     imu_files = files_map['imu']
-    stats['total'] += len(imu_files)
+    stats['total_imu'] = len(imu_files)
 
     if imu_files:
         logger.info(f"Starting IMU Parser on {len(imu_files)} files...")
@@ -111,23 +128,23 @@ def main():
                 df = parse_imu_file(filepath)
                 
                 if df is not None and not df.empty:
-                    stats['success'] += 1
+                    stats['success_imu'] += 1
 
                     #Save the formatted CSV via finisher
                     finisher.save_imu_csv(df, filepath, uid=None)
                 else:
-                    stats['failed'] += 1
+                    stats['failed_imu'] += 1
                     stats['errors'].append({
                         "file": filepath, 
-                        "reason": "Parser returned None or Empty DF"
+                        "reason": "IMU Parser returned None or Empty DF"
                     })
                     
             except Exception as e:
                 # Unexpected Crash (e.g., PermissionError, MemoryError)
-                stats['failed'] += 1
+                stats['failed_imu'] += 1
                 stats['errors'].append({
                     "file": filepath, 
-                    "reason": str(e)
+                    "reason": "IMU PARSER: " + str(e) 
                 })
                 logger.error(f"CRASH processing {os.path.basename(filepath)}: {e}")
     else:
@@ -136,8 +153,7 @@ def main():
 
     # Process Audio Files
     audio_files = files_map['aud']
-    # TODO We aren't adding these to stats['total'] yet just to keep the IMU test clean,
-    # but normally you would increment stats['total'] here too.
+    stats['total_aud'] = len(audio_files)
 
     if audio_files:
         logger.info(f"Starting Audio Parser on {len(audio_files)} files...")   
@@ -147,14 +163,13 @@ def main():
              try:
                 # Construct output path: data/processed/audio/filename.wav
                 output_name = os.path.splitext(os.path.basename(filepath))[0] + ".wav"
-                output_path = os.path.join(processed_folder, "audio", output_name)
+                output_path = os.path.join(processed_folder, "aud", output_name)
                 
                 success = parse_audio_file(filepath, output_path) #TODO Bugfix, there is this constant (175BPM) sharp clicking noise on the audio 
                 
                 if success:
-                     # For now, we are just testing, not adding to main stats object
-                     # to avoid confusing the output until full integration
-                     pass
+                    stats['success_aud'] += 1
+                    #TODO Save the formatted CSV via finisher
                 else:
                      logger.warning(f"Audio parse failed for {filepath}")
 
@@ -164,15 +179,16 @@ def main():
 
     # Process GPS Files
     gps_files = files_map['gps']
-    # TODO We aren't adding these to stats['total'] yet just to keep the IMU test clean,
-    # but normally you would increment stats['total'] here too.
+    stats['total_gps'] = len(gps_files)
+
 
     if gps_files:
         logger.info(f"Starting GPS Parser on {len(gps_files)} files...")
         #TODO
 
         
-    # FInal Report
+    # Final Report
+    stats["total"] = stats["total_imu"] + stats["total_aud"] + stats["total_gps"]
     generate_summary(stats,logger,processed_folder)
 
 if __name__ == "__main__":

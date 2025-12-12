@@ -5,6 +5,7 @@ import pandas as pd
 import struct
 from scipy import signal
 from datetime import datetime, timedelta
+from src.core.binary_utils import generate_metadata_file, read_vesper_header
 
 logger = logging.getLogger("vesper_automator")
 
@@ -12,35 +13,6 @@ logger = logging.getLogger("vesper_automator")
 # The header is exactly 150 bytes long. 
 # Valid sensor data begins at absolute offset 150.
 HEADER_SIZE = 150 
-
-def _bcd_to_int(byte_val):
-    """Helper: Converts a BCD (Binary Coded Decimal) byte to an integer."""
-    return (byte_val // 16) * 10 + (byte_val % 16)
-
-def generate_metadata_file(filepath, meta):
-    """
-    Generates the sidecar .txt file required to replace VesperApp.
-    """
-    txt_path = os.path.splitext(filepath)[0] + ".txt"
-    
-    lines = [
-        f"DeviceID:{meta['DeviceID']}",
-        "HWID:0",
-        "FWID:112",
-        f"Sensor:{meta['Sensor']}",
-        f"SampleRate:{meta['SampleRate']}",
-        "WinRate:0",
-        "WinLen:0",
-        f"Config0:{meta['Config0']}",
-        "Config1:0", "Config2:0", "Config3:0",
-        f"Bitmask:{meta['Bitmask']:X}"
-    ]
-    
-    try:
-        with open(txt_path, 'w') as f:
-            f.write("\n".join(lines))
-    except Exception as e:
-        logger.error(f"Failed to write metadata txt: {e}")
 
 def parse_imu_file(filepath):
     """
@@ -75,49 +47,8 @@ def parse_imu_file(filepath):
 
     try:
         # --- PART 1: HEADER PARSING ---
-        with open(filepath, 'rb') as f:
-            header = f.read(HEADER_SIZE)
-
-        # 1. Decode IDs (Offsets 4 and 8)
-        device_id = struct.unpack('<I', header[4:8])[0]
-        try:
-            # Read 16 bytes for name, split at null terminator
-            sensor_name = header[8:24].split(b'\x00')[0].decode('ascii')
-        except:
-            sensor_name = "IMU10"
-
-        # 2. Decode Configuration (Offsets 28, 40, 44)
-        sample_rate = struct.unpack('<I', header[28:32])[0]
-        bitmask = struct.unpack('<I', header[40:44])[0]
-        config0 = struct.unpack('<I', header[44:48])[0]
-
-        # 3. Decode Timestamp (BCD Format at Offset 132)
-        # BCD means Hex 0x34 represents Decimal 34.
-        h = _bcd_to_int(header[132])
-        m = _bcd_to_int(header[133])
-        s = _bcd_to_int(header[134])
-        
-        # Decode Date (BCD Format at Offset 136)
-        # Format map: Byte 137=Month, 138=Day, 139=Year
-        month = _bcd_to_int(header[137])
-        day   = _bcd_to_int(header[138])
-        year  = 2000 + _bcd_to_int(header[139]) # Sensor stores '25', we make it '2025'
-
-        try:
-            start_dt = datetime(year, month, day, h, m, s)
-        except ValueError:
-            logger.warning(f"Invalid BCD Timestamp in {os.path.basename(filepath)}. Using file time.")
-            start_dt = datetime.fromtimestamp(os.path.getmtime(filepath))
-
-        # Pack metadata for the .txt generator
-        meta = {
-            "DeviceID": f"{device_id:X}",
-            "Sensor": sensor_name,
-            "SampleRate": sample_rate if sample_rate > 0 else 50,
-            "Bitmask": bitmask,
-            "Config0": config0,
-            "Start_Time": start_dt
-        }
+        meta = read_vesper_header(filepath)
+        if not meta: return None
 
         # --- PART 2: GENERATE TXT METADATA ---
         generate_metadata_file(filepath, meta)
@@ -150,7 +81,7 @@ def parse_imu_file(filepath):
         # Create a time range starting from 'start_dt' with '1/SampleRate' steps
         period = 1.0 / meta['SampleRate']
         time_deltas = pd.to_timedelta(np.arange(num_samples) * period, unit='s')
-        timestamps = start_dt + time_deltas
+        timestamps = meta["Start_Time"] + time_deltas
 
         # --- PART 4: CREATE DATAFRAME ---
         # Data is already in correct units (Float32), no scaling needed.
