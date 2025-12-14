@@ -196,7 +196,7 @@ def main():
             logger.info(f"Starting Audio Parser on {len(audio_files)} files...")   
 
             # TODO Just test on the first 5 for now to avoid filling disk with WAVs
-            for filepath in tqdm(audio_files[:5], desc=f"Audio ({session_id})", unit="file"):
+            for filepath in tqdm(audio_files, desc=f"Audio ({session_id})", unit="file"):
                 try:
                     # Construct output path: data/processed/audio/filename.wav
                     #output_name = os.path.splitext(os.path.basename(filepath))[0] + ".wav"
@@ -214,15 +214,11 @@ def main():
 
                     if success:
                         stats['success_aud'] += 1
-                        print("check 1----------------")
                         if meta:
                             finisher.generate_metadata_file(meta, time_stamps)
-                            print("check 2----------------")
 
                         if audio_data is not None and len(audio_data) > 0:
                             finisher.save_aud_wav(audio_data, meta)
-                            print("check 3----------------")
-
 
                     else:
                         stats['failed_aud'] += 1

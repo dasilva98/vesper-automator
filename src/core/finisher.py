@@ -136,15 +136,14 @@ class FileFinisher:
                 
                 # Format: YYYYMMDD-HHMMSS
                 start_time = meta['Start_Time'].strftime("%Y%m%d_%H%M%S")
-                print("meta['Start_Time']:", meta['Start_Time'])
                 #---Construct Filename---
                 # VesperApp style: Start-End_DeviceID.wav
                 new_filename = f"{start_time}_{meta['DeviceID']}.wav" # TODO add end_time to the name of the file
                 output_path = os.path.join(self.structure["aud"], new_filename)
-                print("INSIDE CHECK 1-------------------")
+
                 #---Save to WAV---
                 wavfile.write(output_path, meta['SampleRate'], audio_data) 
-                print("INSIDE CHECK 2-------------------")
+
                 logger.info(f"Saved Audio WAV: {new_filename}")
                 return True
 
