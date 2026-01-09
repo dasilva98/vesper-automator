@@ -29,7 +29,14 @@ def read_vesper_header(filepath, header_size):
         sensor_name = "Unknown"
 
     # 2. Decode Basic Configs
+    fwid = struct.unpack('<H', header[24:26])[0]  # <H = unsigned short (2 bytes)
+    hwid = struct.unpack('<H', header[26:28])[0]
+
     sample_rate = struct.unpack('<I', header[28:32])[0]
+
+    win_len = struct.unpack('<I', header[32:36])[0]
+    win_rate = struct.unpack('<I', header[36:40])[0]
+
     bitmask = struct.unpack('<I', header[40:44])[0]
 
     # 3. Decode Extended Configs (Offsets 44, 48, 52, 56)
@@ -54,7 +61,11 @@ def read_vesper_header(filepath, header_size):
     return {
         "DeviceID": f"{device_id:X}",
         "Sensor": sensor_name,
+        "FWID": fwid,
+        "HWID": hwid,
         "SampleRate": sample_rate,
+        "WinLen": win_len,
+        "WinRate": win_rate,
         "Bitmask": bitmask,
         "Config0": config0,
         "Config1": config1,
