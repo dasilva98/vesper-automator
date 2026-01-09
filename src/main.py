@@ -8,6 +8,8 @@ from src.core.logger import setup_logger
 from src.core.crawler import find_raw_files
 from src.parsers.imu_parser import parse_imu_file
 from src.parsers.audio_parser import parse_audio_file
+from src.parsers.gps_parser import parse_gps_file
+
 from src.core.finisher import FileFinisher
 
 
@@ -195,7 +197,6 @@ def main():
         if audio_files:
             logger.info(f"Starting Audio Parser on {len(audio_files)} files...")   
 
-            # TODO Just test on the first 5 for now to avoid filling disk with WAVs
             for filepath in tqdm(audio_files, desc=f"Audio ({session_id})", unit="file"):
                 try:
                     # Construct output path: data/processed/audio/filename.wav
@@ -210,7 +211,7 @@ def main():
                     # Based on standard design, usually parser takes input and returns data/success.
                     # I will assume we updated it to take output_path as per your snippet.
 
-                    success, meta, audio_data, time_stamps = parse_audio_file(filepath) #TODO Bugfix, there is this constant (175BPM) sharp clicking noise on the audio 
+                    success, meta, audio_data, time_stamps = parse_audio_file(filepath)
 
                     if success:
                         stats['success_aud'] += 1
@@ -244,10 +245,24 @@ def main():
         stats['total_gps'] += len(gps_files)
 
         if gps_files:
-            logger.info(f"  > Found {len(gps_files)} GPS files (Parser TODO)")
-            # TODO: GPS Parser logic
+            logger.info(f"Starting GPS Parser on {len(gps_files)} files...")
+            
+            # The parser handles the subfolder creation (gps/snapshots), 
+            # so we just pass the root processed folder.
+            for filepath in tqdm(gps_files, desc=f"GPS ({session_id})", unit="file"):
+                
+                # We pass 'processed_folder', logic inside parser adds 'gps/snapshots'
+                success = parse_gps_file(filepath, processed_folder)
+                
+                if success:
+                    stats['success_gps'] += 1
+                else:
+                    stats['failed_gps'] += 1
+                    stats['errors'].append({
+                        "file": filepath, 
+                        "reason": "GPS Parser failed (Magic mismatch or empty)"
+                    })
 
-        
     # Final Report
     stats["total"] = stats["total_imu"] + stats["total_aud"] + stats["total_gps"]
     generate_summary(stats,logger,processed_folder)
