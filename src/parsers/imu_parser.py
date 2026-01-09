@@ -4,7 +4,7 @@ import logging
 import pandas as pd
 from src.core.binary_utils import read_vesper_header
 
-logger = logging.getLogger("vesper_automator")
+logger = logging.getLogger("wildlifetag_automator")
 
 # --- CONSTANTS & OFFSETS ---
 # The header is exactly 150 bytes long. 

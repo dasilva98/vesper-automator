@@ -3,7 +3,7 @@ import logging
 import pandas as pd
 from scipy.io import wavfile
 
-logger = logging.getLogger("vesper_automator")
+logger = logging.getLogger("wildlifetag_automator")
 
 class FileFinisher:
     def __init__(self, processed_root):
@@ -137,7 +137,7 @@ class FileFinisher:
                 # Format: YYYYMMDD-HHMMSS
                 start_time = meta['Start_Time'].strftime("%Y%m%d_%H%M%S")
                 #---Construct Filename---
-                # VesperApp style: Start-End_DeviceID.wav
+                # Legacy style: Start-End_DeviceID.wav
                 new_filename = f"{start_time}_{meta['DeviceID']}.wav" # TODO add end_time to the name of the file
                 output_path = os.path.join(self.structure["aud"], new_filename)
 

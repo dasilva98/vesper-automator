@@ -1,7 +1,7 @@
 import os
 import logging
 
-logger = logging.getLogger("vesper_automator")
+logger = logging.getLogger("wildlifetag_automator")
 
 def find_raw_files(root_folder):
     """

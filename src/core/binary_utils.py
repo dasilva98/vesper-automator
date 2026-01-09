@@ -3,7 +3,7 @@ import os
 import logging
 from datetime import datetime
 
-logger = logging.getLogger("vesper_automator")
+logger = logging.getLogger("wildlifetag_automator")
 
 def bcd_to_int(byte_val):
     """Helper: Converts a binary-coded decimal (BCD) byte to an integer."""

@@ -3,7 +3,7 @@ import struct
 import numpy as np
 import logging
 
-logger = logging.getLogger("vesper_automator")
+logger = logging.getLogger("wildlifetag_automator")
 
 def parse_gps_file(filepath, output_root):
     """

@@ -5,7 +5,7 @@ import logging
 from scipy.io import wavfile
 from src.core.binary_utils import read_vesper_header
 
-logger = logging.getLogger("vesper_automator")
+logger = logging.getLogger("wildlifetag_automator")
 
 def parse_audio_file(filepath):
     """
